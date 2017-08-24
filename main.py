@@ -1,9 +1,10 @@
 import tensorflow as tf
 
+from download import download_and_unzip
+
 
 def main():
-    with tf.Session() as sess:
-        print(sess.run(tf.constant("test tensorflow")))
+    download_and_unzip()
 
 
 if __name__ == '__main__':
