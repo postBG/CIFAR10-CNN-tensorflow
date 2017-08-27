@@ -92,3 +92,76 @@ class Cifar10(object):
 
         plt.axis('off')
         plt.imshow(sample_image)
+
+    @staticmethod
+    def _preprocess_and_save(features_preprocessor, labels_preprocessor, features, labels, filename):
+        """
+           Preprocess data and save it to file
+        """
+        processed_features = features_preprocessor(features)
+        processed_labels = labels_preprocessor(labels)
+
+        pickle.dump((processed_features, processed_labels), open(filename, 'wb'))
+
+    def preprocess_and_save(self, features_preprocessor, labels_preprocessor, validation_rate=0.1):
+        n_batches = 5
+        validation_features = []
+        validation_labels = []
+
+        for batch_i in range(1, n_batches + 1):
+            features, labels = self.load_batch(batch_i)
+            validation_count = int(len(features) * validation_rate)
+
+            # Prprocess and save a batch of training data
+            Cifar10._preprocess_and_save(
+                features_preprocessor,
+                labels_preprocessor,
+                features[:-validation_count],
+                labels[:-validation_count],
+                'preprocess_batch_' + str(batch_i) + '.p')
+
+            # Use a portion of training batch for validation
+            validation_features.extend(features[-validation_count:])
+            validation_labels.extend(labels[-validation_count:])
+
+        # Preprocess and Save all validation data
+        Cifar10._preprocess_and_save(
+            features_preprocessor,
+            labels_preprocessor,
+            np.array(validation_features),
+            np.array(validation_labels),
+            'preprocess_validation.p')
+
+        test_batch = _unpickle('test_batch')
+
+        # load the training data
+        test_features = test_batch['data'].reshape((len(test_batch['data']), 3, 32, 32)).transpose(0, 2, 3, 1)
+        test_labels = test_batch['labels']
+
+        # Preprocess and Save all training data
+        Cifar10._preprocess_and_save(
+            features_preprocessor,
+            labels_preprocessor,
+            np.array(test_features),
+            np.array(test_labels),
+            'preprocess_training.p')
+
+    @staticmethod
+    def batch_features_labels(features, labels, batch_size):
+        """
+        Split features and labels into batches
+        """
+        for start in range(0, len(features), batch_size):
+            end = min(start + batch_size, len(features))
+            yield features[start:end], labels[start:end]
+
+    @staticmethod
+    def load_preprocess_training_batch(batch_id, batch_size):
+        """
+        Load the Preprocessed Training data and return them in batches of <batch_size> or less
+        """
+        filename = 'preprocess_batch_' + str(batch_id) + '.p'
+        features, labels = pickle.load(open(filename, mode='rb'))
+
+        # Return the training data in batches of size <batch_size> or less
+        return Cifar10.batch_features_labels(features, labels, batch_size)
