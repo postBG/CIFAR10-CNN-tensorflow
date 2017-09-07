@@ -4,21 +4,31 @@ from layers import conv2d, fully_connected, max_pool2d, flatten, dropout, label
 from utils import Cifar10
 
 
-class NeuralNetworkModel(object):
-    def loss(self):
-        raise NotImplementedError()
+def leaky_relu(x, alpha=0.1):
+    return tf.maximum(alpha * x, x)
 
 
-class SimpleCNN(NeuralNetworkModel):
+def linear(x):
+    return x
+
+
+activation_fn_dict = {
+    'linear': linear,
+    'relu': tf.nn.relu,
+    'leaky': leaky_relu
+}
+
+
+class SimpleCNN(object):
     def __init__(self, config, images):
         self.conv_kernel_size = config.conv_kernel_size
         self.conv_strides = config.conv_strides
-        self.activation_fn = config.activation_fn
-        self.dropout_rate = config.dropout_rate
+        self.activation_fn = activation_fn_dict[config.activation_fn]
         self.config = config
 
-        self.build_graph(images)
         self.labels = label('y')
+        self.dropout_rate = tf.placeholder(tf.float32, name="dropout_rate")
+        self.build_graph(images)
 
     def build_graph(self, images):
         self.conv1 = conv2d(images, 32, self.conv_kernel_size, self.conv_strides, self.activation_fn, name='conv1')
@@ -43,6 +53,4 @@ class SimpleCNN(NeuralNetworkModel):
             self.fc3 = dropout(fully_connected(self.fc2, 128, activation_fn=self.activation_fn), self.dropout_rate)
 
         self.logits = fully_connected(self.fc3, Cifar10.num_classes, name="logits")
-
-    def loss(self):
-        return tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits))
+        self.loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=self.labels, logits=self.logits))

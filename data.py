@@ -38,8 +38,12 @@ def normalize(x):
 
 class DataManager(Cifar10):
     @staticmethod
+    def _get_preprocessed_filename(filename):
+        return os.path.join(preprocessed_data_path, filename)
+
+    @staticmethod
     def _get_processed_train_batch_filename(batch_id):
-        return os.path.join(preprocessed_data_path, 'preprocess_batch_' + str(batch_id) + '.p')
+        return DataManager._get_preprocessed_filename('preprocess_batch_' + str(batch_id) + '.p')
 
     @staticmethod
     def _preprocess_and_save(features_preprocessor, labels_preprocessor, features, labels, filename):
@@ -112,3 +116,13 @@ class DataManager(Cifar10):
         features, labels = pickle.load(open(filename, mode='rb'))
 
         return DataManager.batch_features_labels(features, labels, batch_size)
+
+    @staticmethod
+    def load_preprocess_validation():
+        validation_filepath = DataManager._get_preprocessed_filename('preprocess_validation.p')
+        return pickle.load(open(validation_filepath, mode='rb'))
+
+    @staticmethod
+    def load_preprocess_test():
+        test_filepath = DataManager._get_preprocessed_filename('preprocess_test.p')
+        return pickle.load(open(test_filepath, mode='rb'))
