@@ -34,34 +34,10 @@ def main(argv=None):
     inputs = tf.placeholder(tf.float32, shape=[None, 32, 32, 3], name='inputs')
     net = SimpleCNN(FLAGS, inputs)
 
-    model_trainer = trainer.Trainer(net)
-    validation_features, validation_labels = DataManager.load_preprocess_validation()
-
+    model_trainer = trainer.Trainer(net, inputs, data_manager, FLAGS)
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for epoch in range(FLAGS.epochs):
-            batch_i = 1
-            for features, labels in data_manager.load_preprocess_training_batch(batch_i, FLAGS.batch_size):
-                sess.run(model_trainer.optimizer, feed_dict={
-                    inputs: features,
-                    net.labels: labels,
-                    net.dropout_rate: FLAGS.dropout_rate
-                })
-
-            loss = sess.run(net.loss, feed_dict={
-                inputs: validation_features,
-                net.labels: validation_labels,
-                net.dropout_rate: 1.0
-            })
-
-            accur = sess.run(model_trainer.accuracy, feed_dict={
-                inputs: validation_features,
-                net.labels: validation_labels,
-                net.dropout_rate: 1.0
-            })
-            print('Epoch {:>2}, CIFAR-10 Batch {}:  '.format(epoch + 1, batch_i), end='')
-            print('Traning Loss: {:>10.4f} Accuracy: {:.6f}'.format(loss, accur))
-
+        model_trainer.run(sess)
 
 if __name__ == '__main__':
     tf.app.run()
