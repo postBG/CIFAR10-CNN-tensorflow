@@ -35,7 +35,7 @@ class Trainer(object):
             self.train_one_epoch(session, epoch=epoch)
 
     def train_one_epoch(self, session, *args, **kwargs):
-        for batch_id in range(1, 2):
+        for batch_id in DataManager.batch_ids:
             for features, labels in self.data_manager.load_preprocess_training_batch(batch_id, self.batch_size):
                 session.run(self.optimizer, feed_dict={
                     self.inputs: features,
