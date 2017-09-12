@@ -34,10 +34,7 @@ def main(argv=None):
     inputs = tf.placeholder(tf.float32, shape=[None, 32, 32, 3], name='inputs')
     net = SimpleCNN(FLAGS, inputs)
 
-    optimizer = trainer.optimizer(net)
-    correct_pred = trainer.correct_pred(net)
-    accuracy = trainer.accuracy(net)
-
+    model_trainer = trainer.Trainer(net)
     validation_features, validation_labels = DataManager.load_preprocess_validation()
 
     with tf.Session() as sess:
@@ -45,7 +42,7 @@ def main(argv=None):
         for epoch in range(FLAGS.epochs):
             batch_i = 1
             for features, labels in data_manager.load_preprocess_training_batch(batch_i, FLAGS.batch_size):
-                sess.run(optimizer, feed_dict={
+                sess.run(model_trainer.optimizer, feed_dict={
                     inputs: features,
                     net.labels: labels,
                     net.dropout_rate: FLAGS.dropout_rate
@@ -57,7 +54,7 @@ def main(argv=None):
                 net.dropout_rate: 1.0
             })
 
-            accur = sess.run(accuracy, feed_dict={
+            accur = sess.run(model_trainer.accuracy, feed_dict={
                 inputs: validation_features,
                 net.labels: validation_labels,
                 net.dropout_rate: 1.0
